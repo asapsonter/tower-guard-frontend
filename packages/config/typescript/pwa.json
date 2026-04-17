@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Vite PWA App",
+  "extends": "./vite.json",
+  "compilerOptions": {
+    "types": ["vite/client", "vite-plugin-pwa/client", "node"]
+  }
+}

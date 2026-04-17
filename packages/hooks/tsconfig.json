@@ -1,0 +1,4 @@
+{
+  "extends": "@tower-guard/config/tsconfig/library",
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

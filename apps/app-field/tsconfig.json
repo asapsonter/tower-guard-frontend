@@ -1,0 +1,10 @@
+{
+  "extends": "@tower-guard/config/tsconfig/pwa",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

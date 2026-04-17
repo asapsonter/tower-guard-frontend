@@ -1,0 +1,26 @@
+{
+  "name": "@tower-guard/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tailwind-preset": "./tailwind/preset.ts",
+    "./tsconfig/base": "./typescript/base.json",
+    "./tsconfig/vite": "./typescript/vite.json",
+    "./tsconfig/pwa": "./typescript/pwa.json",
+    "./tsconfig/library": "./typescript/library.json",
+    "./eslint": "./eslint/index.js"
+  },
+  "files": [
+    "tailwind",
+    "typescript",
+    "eslint"
+  ],
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.5.0"
+  },
+  "devDependencies": {
+    "tailwindcss-animate": "^1.0.7"
+  }
+}

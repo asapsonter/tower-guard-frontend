@@ -1,0 +1,29 @@
+{
+  "name": "tower-guard-monorepo",
+  "version": "0.0.0",
+  "devDependencies": {
+    "turbo": "2.9.6",
+    "typescript": "^5.5.3"
+  },
+  "packageManager": "bun@1.3.12",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev --filter=@tower-guard/dashboard-main",
+    "dev:nscdc": "turbo dev --filter=@tower-guard/dashboard-nscdc",
+    "dev:ncc": "turbo dev --filter=@tower-guard/dashboard-ncc",
+    "dev:field": "turbo dev --filter=@tower-guard/app-field",
+    "dev:all": "turbo dev",
+    "build": "turbo build",
+    "build:affected": "turbo build --filter=...[origin/main]",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean && rm -rf node_modules .turbo",
+    "types:generate": "supabase gen types typescript --project-id $VITE_SUPABASE_PROJECT_ID > packages/data/src/supabase-types.ts"
+  },
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
