@@ -8,7 +8,7 @@ export { useTheme } from "./useTheme";
 export { useSimulation } from "./useSimulation";
 export { useDispatchSimulation } from "./useDispatchSimulation";
 export { useAlertDispatchBridge } from "./useAlertDispatchBridge";
-export { useRoleGuard } from "./useRoleGuard";
+export { useRoleGuard, type RoleGuardResult } from "./useRoleGuard";
 
 // Flow monitor — singleton lives in @tower-guard/ui to avoid circular deps
 // (LiveFlowMonitor consumes it). Re-exported here so consumers have a single

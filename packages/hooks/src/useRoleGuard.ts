@@ -1,37 +1,35 @@
 /**
- * useRoleGuard — redirects users who land on the wrong app for their role.
+ * useRoleGuard — detects users who land on the wrong app for their role.
  *
  * Usage in each app's <App />:
- *   useRoleGuard("telecom_admin")    // dashboard-main
- *   useRoleGuard("nscdc_command")    // dashboard-nscdc
- *   useRoleGuard("ncc_regulator")    // dashboard-ncc
- *   useRoleGuard("nscdc_responder")  // app-field
+ *   const guard = useRoleGuard("telecom_admin")    // dashboard-main
+ *   const guard = useRoleGuard("nscdc_command")    // dashboard-nscdc
+ *   const guard = useRoleGuard("ncc_regulator")    // dashboard-ncc
+ *   const guard = useRoleGuard("nscdc_responder")  // app-field
  *
- * Behavior:
- *   - If the user is not yet loaded, do nothing (auth bootstrap window).
- *   - If the user's role matches `expected`, do nothing.
- *   - If the user's role differs, hard-redirect to that role's home URL
- *     (computed by getHomeUrlForRole, which knows dev ports vs. prod subdomains).
- *
- * The hard redirect via window.location.href is intentional: each app is
- * a separate Vite build deployed to a separate origin, so SPA navigation
- * cannot cross app boundaries.
+ * When `guard.mismatch` is true, render <RoleMismatchScreen> (from
+ * @tower-guard/ui) instead of the app. We deliberately do NOT auto-redirect:
+ * a remembered session would bounce people to another app before they ever
+ * see this app's sign-in page, which looks like the link is broken.
  */
-import { useEffect } from "react";
-import { type AppRole, getHomeUrlForRole } from "@tower-guard/data";
+import { type AppRole, APP_NAME_FOR_ROLE, getHomeUrlForRole } from "@tower-guard/data";
 import { useAuth } from "./useAuth";
 
-export function useRoleGuard(expected: AppRole) {
+export interface RoleGuardResult {
+  /** True when the signed-in account belongs to a different app. */
+  mismatch: boolean;
+  accountAppName: string | null;
+  accountAppUrl: string | null;
+  thisAppName: string;
+}
+
+export function useRoleGuard(expected: AppRole): RoleGuardResult {
   const { user, isLoading } = useAuth();
-
-  useEffect(() => {
-    if (isLoading || !user) return;
-    if (user.app_role === expected) return;
-
-    const targetUrl = getHomeUrlForRole(user.app_role);
-    // Avoid redirect loops if we're already at the target origin
-    if (typeof window !== "undefined" && !window.location.href.startsWith(targetUrl)) {
-      window.location.href = targetUrl;
-    }
-  }, [user, isLoading, expected]);
+  const mismatch = !isLoading && !!user && user.app_role !== expected;
+  return {
+    mismatch,
+    accountAppName: mismatch ? APP_NAME_FOR_ROLE[user!.app_role] : null,
+    accountAppUrl: mismatch ? getHomeUrlForRole(user!.app_role) : null,
+    thisAppName: APP_NAME_FOR_ROLE[expected],
+  };
 }

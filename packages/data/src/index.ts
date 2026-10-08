@@ -12,6 +12,7 @@ export {
   isAppRole,
   HOME_URL_FOR_ROLE,
   getHomeUrlForRole,
+  APP_NAME_FOR_ROLE,
 } from "./types/app-role";
 
 // ── Status colors ──

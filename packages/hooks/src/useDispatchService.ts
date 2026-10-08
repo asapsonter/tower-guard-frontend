@@ -225,20 +225,34 @@ export async function reportLocation(
 
 // ── Hooks for realtime data ──
 
+// Set once a request to Supabase fails or times out, so components that
+// remount (e.g. on every tab change) skip straight past the loading state.
+let supabaseUnreachable = false;
+
 /** Used by NSCDC Command to watch all assignments in realtime */
 export function useRealtimeAssignments() {
   const [assignments, setAssignments] = useState<DispatchAssignment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !supabaseUnreachable);
 
   const fetchAll = useCallback(async () => {
     if (!supabase) { setLoading(false); return; }
-    const { data } = await supabase
-      .from("dispatch_assignments")
-      .select("*")
-      .order("dispatched_at", { ascending: false })
-      .limit(50);
-    if (data) setAssignments(data);
-    setLoading(false);
+    // Time-box the request: an unreachable Supabase project would otherwise
+    // leave consumers on a loading spinner forever.
+    if (supabaseUnreachable) { setLoading(false); return; }
+    try {
+      const { data, error } = await supabase
+        .from("dispatch_assignments")
+        .select("*")
+        .order("dispatched_at", { ascending: false })
+        .limit(50)
+        .abortSignal(AbortSignal.timeout(5000));
+      if (data) setAssignments(data);
+      else if (error) supabaseUnreachable = true;
+    } catch {
+      supabaseUnreachable = true;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

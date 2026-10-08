@@ -142,7 +142,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (rawEmail: string, password: string) => {
+    // Autofill and mobile keyboards often append a trailing space
+    const email = rawEmail.trim().toLowerCase();
     try {
       const res = await api.login(email, password);
       const normalizedUser = normalizeUser({ ...res.user, app_role: res.user.app_role || "telecom_admin" });
@@ -158,7 +160,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Backend unavailable — use demo credentials
     }
 
-    const demo = DEMO_USERS[email.toLowerCase()];
+    const demo = DEMO_USERS[email];
     if (!demo || demo.password !== password) {
       throw new Error("Invalid email or password");
     }
