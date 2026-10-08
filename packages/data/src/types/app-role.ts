@@ -24,13 +24,22 @@ export const isAppRole = (value: unknown): value is AppRole => {
 
 /**
  * Returns the production URL for a given role's home app.
- * In dev each app runs on a different port; in prod each lives on a subdomain.
+ * In dev each app runs on a different port; in prod each is its own Vercel
+ * project. Switch these to the towerguard.ng subdomains once their DNS exists.
  */
 export const HOME_URL_FOR_ROLE: Record<AppRole, { dev: string; prod: string }> = {
-  telecom_admin: { dev: "http://localhost:5173", prod: "https://app.towerguard.ng" },
-  nscdc_command: { dev: "http://localhost:5174", prod: "https://nscdc.towerguard.ng" },
-  ncc_regulator: { dev: "http://localhost:5175", prod: "https://ncc.towerguard.ng" },
-  nscdc_responder: { dev: "http://localhost:5176", prod: "https://field.towerguard.ng" },
+  telecom_admin: { dev: "http://localhost:5173", prod: "https://tower-guard-frontend-dashboard-main.vercel.app" },
+  nscdc_command: { dev: "http://localhost:5174", prod: "https://tower-guard-frontend-dashboard-nscd.vercel.app" },
+  ncc_regulator: { dev: "http://localhost:5175", prod: "https://tower-guard-frontend-dashboard-ncc.vercel.app" },
+  nscdc_responder: { dev: "http://localhost:5176", prod: "https://tower-guard-frontend-app-field.vercel.app" },
+};
+
+/** Human-readable name of each role's home app. */
+export const APP_NAME_FOR_ROLE: Record<AppRole, string> = {
+  telecom_admin: "ITIPS Operator Command Dashboard",
+  nscdc_command: "NSCDC Command Dashboard",
+  ncc_regulator: "NCC Monitoring Dashboard",
+  nscdc_responder: "NSCDC Field App",
 };
 
 export function getHomeUrlForRole(role: AppRole): string {

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster, SonnerToaster, TooltipProvider, LiveFlowMonitor } from "@tower-guard/ui";
+import { Toaster, SonnerToaster, TooltipProvider, LiveFlowMonitor, RoleMismatchScreen } from "@tower-guard/ui";
 import { AuthProvider, useAuth, useRoleGuard, useFlowMonitorSubscriptions } from "@tower-guard/hooks";
 import { TELECOM_PROVIDERS } from "@tower-guard/data";
 import { NCCSidebar } from "./components/NCCSidebar";
@@ -25,7 +25,7 @@ const ProtectedApp = () => {
   const [selectedState, setSelectedState] = useState<string | null>(null);
 
   // Read-only NCC monitoring dashboard
-  useRoleGuard("ncc_regulator");
+  const roleGuard = useRoleGuard("ncc_regulator");
 
   // Subscribe to Supabase realtime so the LiveFlowMonitor sees every push
   useFlowMonitorSubscriptions({ appName: "dashboard-ncc" });
@@ -42,8 +42,21 @@ const ProtectedApp = () => {
     return <Login />;
   }
 
+  // Signed in with another app's account (often a remembered session)
+  if (roleGuard.mismatch) {
+    return (
+      <RoleMismatchScreen
+        userName={user?.full_name}
+        accountAppName={roleGuard.accountAppName!}
+        accountAppUrl={roleGuard.accountAppUrl!}
+        thisAppName={roleGuard.thisAppName}
+        onSignOut={logout}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background hud-bg flex">
       <LiveFlowMonitor />
       <NCCSidebar userName={user?.full_name} onLogout={logout} />
       <main className="flex-1 overflow-y-auto p-4">

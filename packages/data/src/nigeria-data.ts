@@ -12,7 +12,7 @@ export type AssetType = (typeof ASSET_TYPES)[number];
 
 export const NAV_PAGES = [
   { title: "Dashboard", path: "/" },
-  { title: "Live Monitoring", path: "/live-monitoring" },
+  { title: "Smart Monitoring", path: "/smart-monitoring" },
   { title: "Incidents", path: "/incidents" },
   { title: "Zonal Coverage", path: "/zonal-centers" },
   { title: "History", path: "/history" },

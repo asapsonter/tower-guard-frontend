@@ -73,3 +73,4 @@ export {
   type FlowEventCategory,
   type FlowEventLevel,
 } from "./lib/flow-monitor";
+export { RoleMismatchScreen } from "./components/role-mismatch-screen";

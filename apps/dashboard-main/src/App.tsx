@@ -1,28 +1,22 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import {
-  SonnerToaster,
-  Toaster,
-  TooltipProvider,
-  SidebarProvider,
-  SidebarTrigger,
-  LiveFlowMonitor,
-} from "@tower-guard/ui";
+import { SonnerToaster, Toaster, TooltipProvider, LiveFlowMonitor, RoleMismatchScreen } from "@tower-guard/ui";
 import {
   AuthProvider,
   useAuth,
-  useTheme,
   useSimulation,
   useAlertDispatchBridge,
   useRoleGuard,
   useFlowMonitorSubscriptions,
 } from "@tower-guard/hooks";
-import { type AssetType, mockTelecomMasts, TELECOM_PROVIDERS } from "@tower-guard/data";
-import { AppSidebar } from "./components/AppSidebar";
+import { mockTelecomMasts } from "@tower-guard/data";
+import { OpsProvider } from "./lib/ops";
+import { OpsLayout } from "./components/ops/OpsLayout";
 import Login from "./pages/Login";
+// Site Operations (hardware-linked live site board and legacy views)
 import Index from "./pages/Index";
-import LiveMonitoring from "./pages/LiveMonitoring";
+import SmartMonitoring from "./pages/SmartMonitoring";
 import Incidents from "./pages/Incidents";
 import ZonalCenters from "./pages/ZonalCenters";
 import History from "./pages/History";
@@ -30,8 +24,22 @@ import Reports from "./pages/Reports";
 import NationalCoverage from "./pages/NationalCoverage";
 import MastDashboard from "./pages/MastDashboard";
 import Inventory from "./pages/Inventory";
-import SmartMonitoring from "./pages/SmartMonitoring";
 import GeoLocation from "./pages/GeoLocation";
+// Operator Command workspaces
+import Overview from "./pages/ops/Overview";
+import Emergency from "./pages/ops/Emergency";
+import SiteTwin from "./pages/ops/SiteTwin";
+import SensorFusion from "./pages/ops/SensorFusion";
+import IncidentCommand from "./pages/ops/IncidentCommand";
+import ResponseSla from "./pages/ops/ResponseSla";
+import AccessInsider from "./pages/ops/AccessInsider";
+import ThreatPatterns from "./pages/ops/ThreatPatterns";
+import PredictiveRisk from "./pages/ops/PredictiveRisk";
+import Cases from "./pages/ops/Cases";
+import SystemHealth from "./pages/ops/SystemHealth";
+import Scorecard from "./pages/ops/Scorecard";
+import Impact from "./pages/ops/Impact";
+import Guardian from "./pages/ops/Guardian";
 
 const queryClient = new QueryClient();
 
@@ -66,33 +74,11 @@ const AlertDispatchBridge = () => {
   return null;
 };
 
-// Resolve the site mast that this dashboard is logged into. This is the
-// same mast the hardware represents. The site name is displayed in the
-// header and never changes during the session.
-const siteMatch = mockTelecomMasts.find((m) => m.id === HARDWARE_MAST_ID);
-const SITE_MAST = siteMatch ?? {
-  id: HARDWARE_MAST_ID,
-  name: "Unknown Mast Site",
-  provider: "Unknown",
-  providerShort: "???",
-  state: "FCT",
-  lga: "Unknown",
-  address: "Address not configured",
-  lat: 9.06, lng: 7.49,
-  tampered: 0, intruders: 0, status: "secure" as const,
-  towerHeight: 0, generatorFuel: 0, batteryCharge: 0,
-  lastMaintenance: "",
-};
-
 const ProtectedApp = () => {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
-  const [selectedAsset, setSelectedAsset] = useState<AssetType>("Telecom Mast");
-  const [selectedState, setSelectedState] = useState<string | null>(null);
-  const [selectedLga, setSelectedLga] = useState<string | null>(null);
-  const { theme, toggleTheme } = useTheme();
 
   // Redirect users with the wrong role to their home app.
-  useRoleGuard("telecom_admin");
+  const roleGuard = useRoleGuard("telecom_admin");
 
   // Subscribe to Supabase realtime so the LiveFlowMonitor sees every push
   useFlowMonitorSubscriptions({ appName: "dashboard-main" });
@@ -109,82 +95,60 @@ const ProtectedApp = () => {
     return <Login />;
   }
 
+  // Signed in with another app's account (often a remembered session)
+  if (roleGuard.mismatch) {
+    return (
+      <RoleMismatchScreen
+        userName={user?.full_name}
+        accountAppName={roleGuard.accountAppName!}
+        accountAppUrl={roleGuard.accountAppUrl!}
+        thisAppName={roleGuard.thisAppName}
+        onSignOut={logout}
+      />
+    );
+  }
+
   return (
-    <SidebarProvider>
+    <OpsProvider>
       <AlertDispatchBridge />
       <LiveFlowMonitor />
-      <div className="min-h-screen flex w-full">
-        <AppSidebar
-          selectedAsset={selectedAsset}
-          onAssetChange={setSelectedAsset}
-          onStateSelect={(state) => { setSelectedState(state); setSelectedLga(null); }}
-          onLgaSelect={setSelectedLga}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          user={user}
-          onLogout={logout}
-          appRole="telecom_admin"
-        />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border px-3 shrink-0 gap-3">
-            <SidebarTrigger />
-            {/* Site identity — permanent for this session */}
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${TELECOM_PROVIDERS.find(p => p.shortName === SITE_MAST.providerShort)?.color ?? "#6366f1"}20` }}>
-                <span className="text-[10px] font-bold"
-                  style={{ color: TELECOM_PROVIDERS.find(p => p.shortName === SITE_MAST.providerShort)?.color }}>
-                  {SITE_MAST.providerShort}
-                </span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-foreground truncate">{SITE_MAST.name}</p>
-                <p className="text-[9px] text-muted-foreground truncate">{SITE_MAST.address}</p>
-              </div>
-            </div>
-
-            <div className="ml-auto flex items-center gap-2">
-              {/* Live indicator */}
-              <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-success/10 border border-success/30 text-[9px] font-semibold text-success">
-                <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                LIVE
-              </span>
-              {selectedState && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
-                  {selectedState}{selectedLga ? ` / ${selectedLga}` : ""}
-                  <button
-                    onClick={() => { setSelectedState(null); setSelectedLga(null); }}
-                    className="ml-1 hover:text-destructive"
-                  >
-                    ��
-                  </button>
-                </span>
-              )}
-            </div>
-          </header>
-          <main className="flex-1 p-4 overflow-y-auto">
-            <Routes>
-              <Route path="/" element={
-                <Index selectedState={selectedState} selectedLga={selectedLga} onStateSelect={setSelectedState} onLgaSelect={setSelectedLga} />
-              } />
-              <Route path="/live-monitoring" element={<LiveMonitoring />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/smart-monitoring" element={<SmartMonitoring />} />
-              <Route path="/incidents" element={<Incidents />} />
-              <Route path="/zonal-centers" element={<ZonalCenters />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/national-coverage" element={<NationalCoverage />} />
-              <Route path="/geo-location" element={
-                <GeoLocation selectedState={selectedState} selectedLga={selectedLga} />
-              } />
-              <Route path="/mast/:id" element={<MastDashboard />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
+      <OpsLayout userName={user?.full_name} onLogout={logout}>
+        <Routes>
+          {/* Operator Command workspaces */}
+          <Route path="/" element={<Overview />} />
+          <Route path="/emergency" element={<Emergency />} />
+          <Route path="/sites" element={<SiteTwin />} />
+          <Route path="/sites/:id" element={<SiteTwin />} />
+          <Route path="/fusion" element={<SensorFusion />} />
+          <Route path="/fusion/:siteId" element={<SensorFusion />} />
+          <Route path="/incidents" element={<IncidentCommand />} />
+          <Route path="/incidents/:id" element={<IncidentCommand />} />
+          <Route path="/response" element={<ResponseSla />} />
+          <Route path="/access" element={<AccessInsider />} />
+          <Route path="/intelligence" element={<ThreatPatterns />} />
+          <Route path="/risk" element={<PredictiveRisk />} />
+          <Route path="/cases" element={<Cases />} />
+          <Route path="/cases/:id" element={<Cases />} />
+          <Route path="/health" element={<SystemHealth />} />
+          <Route path="/sla" element={<Scorecard />} />
+          <Route path="/impact" element={<Impact />} />
+          <Route path="/guardian" element={<Guardian />} />
+          {/* Site Operations — hardware-linked board and earlier views */}
+          <Route path="/site-board" element={<Index />} />
+          <Route path="/smart-monitoring" element={<SmartMonitoring />} />
+          <Route path="/live-monitoring" element={<Navigate to="/smart-monitoring" replace />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/legacy-incidents" element={<Incidents />} />
+          <Route path="/zonal-centers" element={<ZonalCenters />} />
+          <Route path="/history" element={<History />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/national-coverage" element={<NationalCoverage />} />
+          <Route path="/geo-location" element={<GeoLocation selectedState={null} selectedLga={null} />} />
+          <Route path="/mast/:id" element={<MastDashboard />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </OpsLayout>
+    </OpsProvider>
   );
 };
 

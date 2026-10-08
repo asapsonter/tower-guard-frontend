@@ -15,6 +15,7 @@ import {
 import OfficerRoster from "../components/nscdc/OfficerRoster";
 import IncidentTickets from "../components/nscdc/IncidentTickets";
 import { resolveFctCouncil, type CouncilResolution } from "../lib/fctCouncil";
+import { buildNscdcMockData } from "../lib/mockData";
 
 const STATUSES = ["pending", "accepted", "en-route", "on-site", "resolved"] as const;
 
@@ -64,40 +65,69 @@ type TabKey = "overview" | "officers" | "incidents" | "accountability" | "eviden
 // Map URL path segments to tab keys. Driven by react-router useLocation
 // so the active tab stays in sync with deep-linking and back/forward navigation.
 const PATH_TO_TAB: Record<string, TabKey> = {
-  "/": "overview",
-  "/officers": "officers",
-  "/incidents": "incidents",
-  "/accountability": "accountability",
-  "/evidence": "evidence",
+  "/station": "overview",
+  "/station/officers": "officers",
+  "/station/incidents": "incidents",
+  "/station/accountability": "accountability",
+  "/station/evidence": "evidence",
 };
 const TAB_TO_PATH: Record<TabKey, string> = {
-  overview: "/",
-  officers: "/officers",
-  incidents: "/incidents",
-  accountability: "/accountability",
-  evidence: "/evidence",
+  overview: "/station",
+  officers: "/station/officers",
+  incidents: "/station/incidents",
+  accountability: "/station/accountability",
+  evidence: "/station/evidence",
 };
 
 const NSCDCDashboard = () => {
   const location = useLocation();
   const activeTab: TabKey = PATH_TO_TAB[location.pathname] ?? "overview";
 
-  const { assignments, loading } = useRealtimeAssignments();
-  const { messages } = useRealtimeMessages();
+  const { assignments: liveAssignments, loading } = useRealtimeAssignments();
+  const { messages: liveMessages } = useRealtimeMessages();
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
-  const [performance, setPerformance] = useState<ResponderPerf[]>([]);
-  const [evidencePhotos, setEvidencePhotos] = useState<any[]>([]);
+  const [liveTeamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>({});
+  const [livePerformance, setPerformance] = useState<ResponderPerf[]>([]);
+  const [liveEvidencePhotos, setEvidencePhotos] = useState<any[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [evidenceFilter, setEvidenceFilter] = useState<string | null>(null);
-  const [incidents, setIncidents] = useState<Record<string, IncidentInfo>>({});
+  const [liveIncidents, setIncidents] = useState<Record<string, IncidentInfo>>({});
 
   // GPS-resolved council — defaults to AMAC until geolocation returns.
   // `scope` tells us whether to filter by a single council, widen to all of
   // FCT, or fall back (operator is outside FCT / denied location).
   const [councilRes, setCouncilRes] = useState<CouncilResolution>({ scope: "council", council: "AMAC" });
   const scopeLabel = councilRes.council ?? "FCT";
+
+  // Demo data fills the dashboard while Supabase has no dispatches; real rows
+  // take over as soon as the first one arrives.
+  const [mock] = useState(() => buildNscdcMockData(Date.now()));
+  const usingMock = !loading && liveAssignments.length === 0;
+  const assignments = usingMock ? mock.assignments : liveAssignments;
+  const messages = usingMock && liveMessages.length === 0 ? mock.messages : liveMessages;
+  const teamMembers = usingMock ? mock.teamMembers : liveTeamMembers;
+  const incidents: Record<string, IncidentInfo> = usingMock ? mock.incidents : liveIncidents;
+  const performance = useMemo(() => {
+    if (!usingMock) return livePerformance;
+    if (councilRes.scope !== "council") return mock.performance;
+    const scoped = mock.performance.filter(p => p.council_area === councilRes.council);
+    return scoped.length > 0 ? scoped : mock.performance;
+  }, [usingMock, livePerformance, mock, councilRes]);
+  const evidencePhotos = useMemo(() => {
+    if (!usingMock) return liveEvidencePhotos;
+    const incidentFor = new Map(mock.assignments.map(a => [a.id, a.incident_id]));
+    return mock.messages
+      .filter(m => m.message_type === "photo")
+      .map(m => ({
+        id: m.id,
+        assignment_id: m.assignment_id,
+        incident_id: incidentFor.get(m.assignment_id) || m.assignment_id,
+        sender_name: m.sender_name,
+        content: m.content || "",
+        created_at: m.created_at,
+      }));
+  }, [usingMock, liveEvidencePhotos, mock]);
 
   // Demo-row timestamp refresh: on every page load, remap demo assignments'
   // dispatched_at to a fresh staggered set so the SLA Timer Wall never shows
@@ -305,6 +335,14 @@ const NSCDCDashboard = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {usingMock && (
+            <span
+              className="px-2.5 py-1 rounded-full bg-warning/10 border border-warning/40 text-[10px] font-semibold text-warning"
+              title="No live dispatches in Supabase — showing sample data"
+            >
+              DEMO DATA
+            </span>
+          )}
           <span className="px-2.5 py-1 rounded-full bg-secondary border border-border text-[10px] font-semibold text-foreground">📍 {scopeLabel}{councilRes.scope === "out-of-fct" ? " (outside FCT)" : councilRes.scope === "fct" ? ", FCT" : ", Abuja"}</span>
           <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 border border-success/30 text-[10px] font-semibold text-success">
             <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
@@ -528,6 +566,7 @@ const NSCDCDashboard = () => {
           teamMembers={teamMembers}
           messages={messages}
           scopeLabel={scopeLabel}
+          mockIncidents={usingMock ? mock.incidents : undefined}
         />
       )}
 

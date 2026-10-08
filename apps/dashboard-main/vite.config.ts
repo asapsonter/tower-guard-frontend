@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { visualizer } from "rollup-plugin-visualizer";
 import path from "path";
+import { devApi } from "./server/devApi";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,6 +13,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    devApi(),
     mode === "analyze" &&
       visualizer({
         filename: "dist/stats.html",
