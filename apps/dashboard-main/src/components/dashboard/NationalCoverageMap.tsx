@@ -109,13 +109,25 @@ const NationalCoverageMap = () => {
           className="h-full w-full z-0"
           style={{ background: "#0f172a" }}
         >
-          {/* CartoDB Voyager for clear street context */}
+          {/* Esri satellite imagery — realistic vegetation-green terrain */}
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution="&copy; CARTO &copy; OSM"
-            tileSize={512}
-            zoomOffset={-1}
-            maxZoom={20}
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="Imagery &copy; Esri, Maxar, Earthstar Geographics"
+            maxNativeZoom={18}
+            maxZoom={18}
+            className="tg-satellite-tiles"
+          />
+          {/* Road + place-name overlays so the street context isn't lost */}
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+            maxNativeZoom={18}
+            maxZoom={18}
+            opacity={0.55}
+          />
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+            maxNativeZoom={18}
+            maxZoom={18}
           />
 
           {/* Area masts */}

@@ -12,6 +12,7 @@
     "clean": "rm -rf dist .turbo .vite"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@tanstack/react-query": "^5.83.0",
     "@tower-guard/api-client": "workspace:*",
     "@tower-guard/data": "workspace:*",

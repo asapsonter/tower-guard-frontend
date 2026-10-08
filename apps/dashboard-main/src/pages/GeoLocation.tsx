@@ -177,7 +177,7 @@ interface GeoLocationProps {
 // ── Main component ─────────────────────────────────────────────────────────
 const GeoLocation = ({ selectedState, selectedLga }: GeoLocationProps) => {
   const navigate = useNavigate();
-  const [activeTile, setActiveTile] = useState("streets");
+  const [activeTile, setActiveTile] = useState("satellite");
   const [showTileMenu, setShowTileMenu] = useState(false);
 
   // Resolve the center point for the selected location

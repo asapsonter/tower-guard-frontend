@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Monitor, Package, AlertTriangle, Building2, Clock, FileText, Globe,
-  MapPin, ChevronDown, ChevronRight, User, Signal, Shield, Sun, Moon, LogOut, Eye
+  MapPin, ChevronDown, ChevronRight, User, Signal, Shield, Sun, Moon, LogOut
 } from "lucide-react";
 import logo from "@/assets/seismic-logo.png";
 import {
@@ -20,9 +20,8 @@ const SHARED_NAV = [
 
 const TELECOM_ADMIN_NAV = [
   { title: "Dashboard", path: "/", icon: LayoutDashboard },
-  { title: "Live Monitoring", path: "/live-monitoring", icon: Monitor },
+  { title: "Smart Monitoring", path: "/smart-monitoring", icon: Monitor },
   { title: "Inventory", path: "/inventory", icon: Package },
-  { title: "Smart Monitoring", path: "/smart-monitoring", icon: Eye },
   { title: "Incidents", path: "/incidents", icon: AlertTriangle },
   { title: "Zonal Coverage", path: "/zonal-centers", icon: Building2 },
   { title: "History", path: "/history", icon: Clock },

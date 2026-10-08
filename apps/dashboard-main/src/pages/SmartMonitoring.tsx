@@ -48,7 +48,7 @@ function resolveUrl(url?: string) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-const LiveMonitoring = () => {
+const SmartMonitoring = () => {
   const {
     alerts,
     events,
@@ -96,7 +96,7 @@ const LiveMonitoring = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Monitor className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-bold text-foreground">Live Monitoring</h1>
+          <h1 className="text-lg font-bold text-foreground">Smart Monitoring</h1>
         </div>
         <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 border border-success/30 text-[10px] font-semibold text-success">
           <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
@@ -299,4 +299,4 @@ const LiveMonitoring = () => {
   );
 };
 
-export default LiveMonitoring;
+export default SmartMonitoring;
