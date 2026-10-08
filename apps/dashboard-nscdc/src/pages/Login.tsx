@@ -126,6 +126,13 @@ const Login = () => {
               )}
               {loading ? "Please wait..." : "Sign In"}
             </Button>
+
+            {/* Field officer accounts get redirected to the Field App, so make the station login obvious */}
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              Use the station account <span className="font-mono text-foreground">nscdc.station@towerguard.ng</span>.
+              <br />
+              Field officer accounts open the Field App instead.
+            </p>
           </form>
         </div>
 

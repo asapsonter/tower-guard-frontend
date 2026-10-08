@@ -12,6 +12,7 @@
     "clean": "rm -rf dist .turbo .vite"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@tanstack/react-query": "^5.83.0",
     "@tower-guard/api-client": "workspace:*",
     "@tower-guard/data": "workspace:*",
@@ -19,14 +20,18 @@
     "@tower-guard/supabase-client": "workspace:*",
     "@tower-guard/ui": "workspace:*",
     "framer-motion": "^12.38.0",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.462.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.30.1",
+    "recharts": "^2.15.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@tower-guard/config": "workspace:*",
+    "@types/leaflet": "^1.9.14",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

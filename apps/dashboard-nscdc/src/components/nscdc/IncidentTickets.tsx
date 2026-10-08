@@ -44,6 +44,8 @@ interface Props {
   teamMembers: Record<string, TeamMember[]>;
   messages: ResponderMessage[];
   scopeLabel?: string;
+  /** Demo mode: use these incidents and the `messages` prop instead of querying Supabase. */
+  mockIncidents?: Record<string, Incident>;
 }
 
 const STATUS_BADGE: Record<string, string> = {
@@ -54,15 +56,21 @@ const STATUS_BADGE: Record<string, string> = {
   resolved: "bg-success/20 text-success border-success/30",
 };
 
-export default function IncidentTickets({ assignments, teamMembers, messages, scopeLabel = "AMAC" }: Props) {
+export default function IncidentTickets({ assignments, teamMembers, messages, scopeLabel = "AMAC", mockIncidents }: Props) {
   const [openTicket, setOpenTicket] = useState<string | null>(null);
-  const [incidents, setIncidents] = useState<Record<string, Incident>>({});
-  const [ticketMessages, setTicketMessages] = useState<ResponderMessage[]>([]);
+  const [liveIncidents, setIncidents] = useState<Record<string, Incident>>({});
+  const [liveTicketMessages, setTicketMessages] = useState<ResponderMessage[]>([]);
+  const incidents = mockIncidents ?? liveIncidents;
+  const ticketMessages = mockIncidents
+    ? messages
+        .filter(m => m.assignment_id === openTicket)
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+    : liveTicketMessages;
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   // Fetch incidents for all assignments
   const fetchIncidents = useCallback(async () => {
-    if (!supabase) return;
+    if (!supabase || mockIncidents) return;
     const incidentIds = [...new Set(assignments.map(a => a.incident_id))];
     if (incidentIds.length === 0) return;
     const { data } = await supabase
@@ -74,7 +82,7 @@ export default function IncidentTickets({ assignments, teamMembers, messages, sc
       data.forEach(i => { map[i.id] = i; });
       setIncidents(map);
     }
-  }, [assignments]);
+  }, [assignments, mockIncidents]);
 
   useEffect(() => { fetchIncidents(); }, [fetchIncidents]);
 
@@ -90,7 +98,7 @@ export default function IncidentTickets({ assignments, teamMembers, messages, sc
   }, []);
 
   useEffect(() => {
-    if (!openTicket) return;
+    if (!openTicket || mockIncidents) return;
     fetchTicketMessages(openTicket);
     if (!supabase) return;
     const ch = supabase
@@ -100,7 +108,7 @@ export default function IncidentTickets({ assignments, teamMembers, messages, sc
       })
       .subscribe();
     return () => { supabase!.removeChannel(ch); };
-  }, [openTicket, fetchTicketMessages]);
+  }, [openTicket, fetchTicketMessages, mockIncidents]);
 
   // Group assignments: active first, then resolved
   const active = assignments.filter(a => a.status !== "resolved");
